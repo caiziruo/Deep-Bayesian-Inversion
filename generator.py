@@ -26,6 +26,7 @@ class Generator(nn.Module):
         self.outc = nn.Sequential(
             res_unit_no_bn(32, 32),
             nn.Conv2d(32, 1, kernel_size=1),
+            nn.Sigmoid()
         )
 
     def forward(self, x):

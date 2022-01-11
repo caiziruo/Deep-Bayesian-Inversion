@@ -12,7 +12,7 @@ class LoDoPab_train(Dataset):
         self.ground_truth = []
         self.low_dose = []
 
-        n = 20
+        n = 40
         for i in range(n):
             with h5py.File(os.path.join(
                 ground_truth_path, 'ground_truth_{}_{:03d}.hdf5'.format('train', i)), 'r') as file:
@@ -39,8 +39,9 @@ class LoDoPab_test(Dataset):
         self.ground_truth = []
         self.low_dose = []
 
-        n = 270
-        for i in range(n, 279):
+        n = 0
+        p = 1
+        for i in range(n, n+p):
             with h5py.File(os.path.join(
                 ground_truth_path, 'ground_truth_{}_{:03d}.hdf5'.format('train', i)), 'r') as file:
                 ground_truth_data_i = file['data'][:]
@@ -50,8 +51,8 @@ class LoDoPab_test(Dataset):
             self.low_dose.append(low_dose_data_i)
                 
         # ground_truth_data_i # [128, 362, 362]
-        self.ground_truth = torch.FloatTensor(self.ground_truth).reshape((n * 128, 1, 362, 362))
-        self.low_dose = torch.FloatTensor(self.low_dose).reshape((n * 128, 1, 362, 362))
+        self.ground_truth = torch.FloatTensor(self.ground_truth).reshape((p * 128, 1, 362, 362))
+        self.low_dose = torch.FloatTensor(self.low_dose).reshape((p * 128, 1, 362, 362))
 
 
     def __len__(self):

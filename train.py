@@ -9,12 +9,16 @@ from generator import Generator
 from utils import grad_penalty
 import time
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '7'
+os.environ["CUDA_VISIBLE_DEVICES"] = "2, 4, 5, 7"
+device_ids = [0, 1, 2, 3]
 
 D = Discriminator(3).cuda()# input channels (X x X) x Y -> output scalar R
 G = Generator(2).cuda() # input channels:  Z x Y -> output channel X
+if len(device_ids) > 1:
+    D = torch.nn.DataParallel(D, device_ids = device_ids)
+    G = torch.nn.DataParallel(G, device_ids = device_ids)
 
-hyperp = {'batch_size': 32, 'epochs': 2000}
+hyperp = {'batch_size': 96, 'epochs': 2000}
 
 data_train = LoDoPab_train("../ground_truth_train", "../low_dose_simulation")
 loader = DataLoader(data_train, batch_size=hyperp['batch_size'],shuffle=True)
@@ -31,7 +35,7 @@ if idx!=-1:
     
 G.train()
 D.train()
-for e in range(idx+1,hyperp['epochs']):
+for e in range(idx + 1,hyperp['epochs']):
     for i, (xi, yi) in enumerate(loader):
         # See Equation (33), Appendix D. in 'Deep Bayesian Inversion'
 
@@ -62,20 +66,20 @@ for e in range(idx+1,hyperp['epochs']):
             d_drift = 0.001 * torch.mean( torch.pow(D_x_x_y, 2) )
             d_total_loss = d_loss + d_drift + d_grad
 
-            D.zero_grad()
+            D_solver.zero_grad()
             d_total_loss.backward()
             D_solver.step()
         if (i+1) % 5 == 0:
             g_loss = torch.mean(d_x_Gz_y) - torch.mean(d_Gz1_Gz2_y)
 
-            G.zero_grad()
+            G_solver.zero_grad()
             g_loss.backward()
             G_solver.step()
             print(
-                "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f] [drift loss: %f][grad loss: %f]"
-                % (e, hyperp['epochs'], i, len(loader), d_loss.item(), g_loss.item(), d_drift.item(), d_grad.item())
+                "[Epoch %d/%d] [Batch %d/%d] [D total loss: %f] [G loss: %f] [D loss: %f] [drift loss: %f][grad loss: %f]"
+                % (e, hyperp['epochs'], i, len(loader), d_total_loss.item(), g_loss.item(), d_loss.item(), d_drift.item(), d_grad.item())
             )
-    if (e+1)%100==0:
+    if (e+1) % 5 == 0:
         os.mkdir('./parameters/checkpoint%d'%(e))
         torch.save(D.state_dict(),'./parameters/checkpoint%d/D.pt'%(e))
         torch.save(G.state_dict(),'./parameters/checkpoint%d/G.pt'%(e))
