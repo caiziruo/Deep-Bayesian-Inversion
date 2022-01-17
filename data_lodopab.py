@@ -39,7 +39,7 @@ class LoDoPab_test(Dataset):
         self.ground_truth = []
         self.low_dose = []
 
-        n = 0
+        n = 50
         p = 1
         for i in range(n, n+p):
             with h5py.File(os.path.join(
